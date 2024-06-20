@@ -104,4 +104,6 @@ npm start
 
 If you encounter any issues or have questions, please contact our email or dm me on instagram, i already provide on my bio.
 
-Thank you for using Paymentku!
+Please give me star if you like and follow my account
+
+Thank you!
