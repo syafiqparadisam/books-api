@@ -2,4 +2,4 @@
 *.lock
 *.toml
 *.rs
-src
+src/*
