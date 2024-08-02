@@ -1,24 +1,42 @@
-use std::{io, sync::Arc};
-use tokio::sync::Notify;
+use dotenv::dotenv;
+use std::env;
 
-use crate::handlers::get_book::get_books;
-use actix_web::{App, HttpServer};
-use tokio::signal;
-
-
-
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct DatabaseConfig {
     url: String,
 }
 
 #[derive(Debug)]
 pub struct HttpConfig {
-    port: i32,
+    port: u16,
     host: String,
-    shutdown_notify: Arc<Notify>,
 }
 
+#[derive(Debug)]
+pub struct EnvConfig {
+    pub db_url: String,
+    pub port: u16,
+    pub host: String
+}
+
+impl EnvConfig {
+    pub fn new() -> EnvConfig {
+        dotenv().ok();
+
+        let db_url: String = env::var("POSTGRES_URL")
+            .expect("Postgres url is not defined");          
+
+        let port: u16 = env::var("APP_PORT")
+            .expect("PORT is not defined")
+            .parse()
+            .expect("Cannot convert string to integer");
+
+        let host: String = env::var("APP_HOST")
+            .expect("Host is not defined");
+        
+        EnvConfig { db_url, port, host }
+    }
+}
 
 impl DatabaseConfig {
     pub async fn new(url: String) -> DatabaseConfig {
@@ -30,40 +48,7 @@ impl DatabaseConfig {
 }
 
 impl HttpConfig {
-    pub fn new(port: i32, host: String) -> HttpConfig {
-        HttpConfig {
-            port,
-            host,
-            shutdown_notify: Arc::new(Notify::new()),
-        }
-    }
-
-    pub async fn connect(&self) -> io::Result<()> {
-        let shutdown_notify = self.shutdown_notify.clone();
-
-        let server = HttpServer::new(move || App::new().service(get_books))
-            .bind((self.host.as_str(), self.port))?
-            .run();
-
-        // Tunggu notifikasi shutdown
-        let shutdown = async {
-            shutdown_notify.notified().await;
-        };
-        // Setup signal handling for graceful shutdown
-        let shutdown_notify_clone = shutdown_notify.clone();
-        let signal_handler = async {
-            signal::ctrl_c()
-                .await
-                .expect("Failed to install Ctrl+C signal handler");
-            println!("Received shutdown signal");
-            shutdown_notify_clone.notify_one();
-        };
-
-        // Run server and signal handler concurrently
-        tokio::try_join!(server, signal_handler)?;
-    }
-
-    pub fn shutdown(&self) {
-        self.shutdown_notify.notify_one();
+    pub fn new(port: u16, host: String) -> HttpConfig {
+        HttpConfig { port, host }
     }
 }

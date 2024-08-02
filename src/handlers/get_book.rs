@@ -1,15 +1,11 @@
-use actix_web::{get, HttpResponse, Responder};
+
 
 use crate::config::DatabaseConfig;
+use actix_web::{http::StatusCode, web, HttpResponse, Responder};
 
-use super::handlers;
+use super::ApiResponse;
 
-impl handlers {
-    pub fn new(db_config: DatabaseConfig) -> handlers {
-        handlers { db_config }
-    }
-
-    pub async fn get_books() -> impl Responder {
-        return HttpResponse::Ok();
-    }
+pub async fn get_books(db_config: web::Data<DatabaseConfig>) -> impl Responder {
+    let response: ApiResponse<String> = ApiResponse::new(StatusCode::OK, None, format!("This message was ok"));
+    HttpResponse::Ok().json(response)
 }
