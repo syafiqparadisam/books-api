@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use actix_web::http::StatusCode;
 pub mod get_book;
 
